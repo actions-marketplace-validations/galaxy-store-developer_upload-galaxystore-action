@@ -1,0 +1,29 @@
+name: 'Upload to Samsung Galaxy Store'
+description: 'Upload Android APK or AAB files to the Samsung Galaxy Store'
+author: 'Cristian Lewczyk'
+
+inputs:
+  access-token:
+    description: 'Galaxy Store API access token'
+    required: true
+  service-account-id:
+    description: 'Galaxy Store service account ID'
+    required: true
+  content-id:
+    description: '12-digit content ID of the app in the Galaxy Store'
+    required: true
+  package-path:
+    description: 'Path to the .apk or .aab file to upload'
+    required: true
+
+outputs:
+  upload-result:
+    description: 'JSON string containing the add binary API response'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
+
+branding:
+  icon: 'upload-cloud'
+  color: 'blue'
