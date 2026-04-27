@@ -21,7 +21,7 @@ outputs:
     description: 'JSON string containing the add binary API response'
 
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js'
 
 branding:

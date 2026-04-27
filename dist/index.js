@@ -34586,6 +34586,8 @@ const path = __importStar(__nccwpck_require__(6928));
 const BASE_URL = 'https://devapi.samsungapps.com';
 const UPLOAD_URL = 'https://seller.samsungapps.com/galaxyapi/fileUpload';
 class GalaxyStoreClient {
+    client;
+    serviceAccountId;
     constructor(serviceAccountId, accessToken) {
         this.serviceAccountId = serviceAccountId;
         this.client = axios_1.default.create({
