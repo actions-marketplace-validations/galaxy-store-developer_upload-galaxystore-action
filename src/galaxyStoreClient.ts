@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosError } from 'axios';
 import FormData from 'form-data';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -33,6 +33,17 @@ export class GalaxyStoreClient {
         'service-account-id': serviceAccountId
       }
     });
+
+    this.client.interceptors.response.use(
+      response => response,
+      (error: AxiosError) => {
+        if (error.response) {
+          const body = JSON.stringify(error.response.data);
+          throw new Error(`HTTP ${error.response.status} ${error.response.config?.url}: ${body}`);
+        }
+        throw error;
+      }
+    );
   }
 
   async createUploadSessionId(): Promise<string> {

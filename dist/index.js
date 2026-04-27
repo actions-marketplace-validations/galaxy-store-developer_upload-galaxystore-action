@@ -34594,6 +34594,13 @@ class GalaxyStoreClient {
                 'service-account-id': serviceAccountId
             }
         });
+        this.client.interceptors.response.use(response => response, (error) => {
+            if (error.response) {
+                const body = JSON.stringify(error.response.data);
+                throw new Error(`HTTP ${error.response.status} ${error.response.config?.url}: ${body}`);
+            }
+            throw error;
+        });
     }
     async createUploadSessionId() {
         const response = await this.client.post(`${BASE_URL}/seller/createUploadSessionId`);
