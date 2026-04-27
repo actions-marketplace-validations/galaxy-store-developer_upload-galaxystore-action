@@ -9,15 +9,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create dummy APK
-        run: |
-          echo "placeholder" > placeholder.txt
-          zip dummy-app.apk placeholder.txt
+      - name: Download test AAB
+        run: gh release download v0.1-test-assets --pattern "app-release_v101.aab" --repo cristian-samsung/upload-galaxystore-action
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload to Galaxy Store
         uses: ./
         with:
           access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
           service-account-id: ${{ secrets.GALAXY_SERVICE_ACCOUNT_ID }}
-          content-id: '123456789012'
-          package-path: './dummy-app.apk'
+          content-id: ${{ vars.GALAXY_CONTENT_ID }}
+          package-path: './app-release_v101.aab'
