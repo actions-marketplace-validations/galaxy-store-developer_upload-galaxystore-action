@@ -34628,13 +34628,16 @@ class GalaxyStoreClient {
     async createUpdate(contentId) {
         await this.client.post(`${BASE_URL}/seller/contentUpdate`, { contentId });
     }
-    async addBinary(contentId, fileKey) {
-        const response = await this.client.post(`${BASE_URL}/seller/v2/content/binary`, {
+    async addBinary(contentId, fileKey, binarySeqForDeviceInfo) {
+        const body = {
             contentId,
             gms: 'N',
-            filekey: fileKey,
-            binarySeqForDeviceInfo: '1'
-        });
+            filekey: fileKey
+        };
+        if (binarySeqForDeviceInfo) {
+            body.binarySeqForDeviceInfo = binarySeqForDeviceInfo;
+        }
+        const response = await this.client.post(`${BASE_URL}/seller/v2/content/binary`, body);
         return response.data;
     }
     async getAppInfo(contentId) {
@@ -34710,6 +34713,7 @@ async function run() {
         const serviceAccountId = core.getInput('service-account-id', { required: true });
         const contentId = core.getInput('content-id', { required: true });
         const packagePath = core.getInput('package-path', { required: true });
+        const binarySeqForDeviceInfo = core.getInput('binary-seq-for-device-info') || undefined;
         if (!/^\d{12}$/.test(contentId)) {
             core.setFailed(`content-id must be a 12-digit number, got: '${contentId}'`);
             return;
@@ -34731,7 +34735,7 @@ async function run() {
         const fileKey = uploadResult.fileKey;
         core.info(`File uploaded successfully, file key: ${fileKey}`);
         core.info(`Adding binary to content ID ${contentId}...`);
-        const result = await client.addBinary(contentId, fileKey);
+        const result = await client.addBinary(contentId, fileKey, binarySeqForDeviceInfo);
         core.info('Binary added successfully');
         core.setOutput('upload-result', JSON.stringify(result));
     }

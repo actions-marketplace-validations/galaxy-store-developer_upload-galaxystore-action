@@ -15,6 +15,9 @@ inputs:
   package-path:
     description: 'Path to the .apk or .aab file to upload'
     required: true
+  binary-seq-for-device-info:
+    description: 'Sequence number of the device info configuration for the binary. Only set if your app requires a specific device configuration sequence.'
+    required: false
 
 outputs:
   upload-result:

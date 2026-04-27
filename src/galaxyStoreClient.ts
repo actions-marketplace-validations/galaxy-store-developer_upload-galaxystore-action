@@ -78,13 +78,16 @@ export class GalaxyStoreClient {
     await this.client.post(`${BASE_URL}/seller/contentUpdate`, { contentId });
   }
 
-  async addBinary(contentId: string, fileKey: string): Promise<unknown> {
-    const response = await this.client.post(`${BASE_URL}/seller/v2/content/binary`, {
+  async addBinary(contentId: string, fileKey: string, binarySeqForDeviceInfo?: string): Promise<unknown> {
+    const body: Record<string, string> = {
       contentId,
       gms: 'N',
-      filekey: fileKey,
-      binarySeqForDeviceInfo: '1'
-    });
+      filekey: fileKey
+    };
+    if (binarySeqForDeviceInfo) {
+      body.binarySeqForDeviceInfo = binarySeqForDeviceInfo;
+    }
+    const response = await this.client.post(`${BASE_URL}/seller/v2/content/binary`, body);
     return response.data;
   }
 
