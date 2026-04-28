@@ -42,10 +42,13 @@ async function run(): Promise<void> {
 
     let binariesBefore: Set<number> | undefined;
     if (stagedRollout) {
+      core.info('Fetching staged rollout binaries (REGISTRATION)...');
       let before = await client.getStagedRolloutBinaries(contentId, 'REGISTRATION');
       if (before.length === 0) {
+        core.info('No REGISTRATION binaries found, fetching SALE binaries as baseline...');
         before = await client.getStagedRolloutBinaries(contentId, 'SALE');
       }
+      core.info(`Baseline binaries (seqs: ${before.map(b => b.seq).join(', ') || 'none'})`);
       binariesBefore = new Set(before.map(b => b.seq));
     }
 
@@ -61,8 +64,9 @@ async function run(): Promise<void> {
     core.setOutput('upload-result', JSON.stringify(result));
 
     if (stagedRollout) {
-      core.info('Resolving binary sequence for staged rollout...');
+      core.info('Fetching staged rollout binaries after upload (REGISTRATION)...');
       const after = await client.getStagedRolloutBinaries(contentId, 'REGISTRATION');
+      core.info(`Post-upload binaries (seqs: ${after.map(b => b.seq).join(', ') || 'none'})`);
       const newBinaries = after.filter(b => !binariesBefore!.has(b.seq));
 
       if (newBinaries.length === 0) {

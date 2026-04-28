@@ -115,11 +115,18 @@ export class GalaxyStoreClient {
   }
 
   async getStagedRolloutBinaries(contentId: string, appStatus: 'REGISTRATION' | 'SALE'): Promise<StagedRolloutBinary[]> {
-    const response = await this.client.get<{ data: { binaries: StagedRolloutBinary[] } }>(
-      `${BASE_URL}/seller/v2/content/stagedRolloutBinary`,
-      { params: { contentId, appStatus } }
-    );
-    return response.data.data.binaries ?? [];
+    try {
+      const response = await this.client.get<{ data: { binaries: StagedRolloutBinary[] } }>(
+        `${BASE_URL}/seller/v2/content/stagedRolloutBinary`,
+        { params: { contentId, appStatus } }
+      );
+      return response.data.data.binaries ?? [];
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('HTTP 404')) {
+        return [];
+      }
+      throw error;
+    }
   }
 
   async addStagedRolloutBinary(contentId: string, binarySeq: number): Promise<unknown> {
