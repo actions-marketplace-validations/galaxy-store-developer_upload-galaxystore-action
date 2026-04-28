@@ -34625,8 +34625,12 @@ class GalaxyStoreClient {
         });
         return response.data;
     }
-    async createUpdate(contentId) {
-        await this.client.post(`${BASE_URL}/seller/contentUpdate`, { contentId });
+    async createUpdate(contentId, publicationType, startPublicationDate) {
+        const body = { contentId, publicationType };
+        if (startPublicationDate) {
+            body.startPublicationDate = startPublicationDate;
+        }
+        await this.client.post(`${BASE_URL}/seller/contentUpdate`, body);
     }
     async addBinary(contentId, fileKey, binarySeqForDeviceInfo) {
         const body = {
@@ -34746,6 +34750,8 @@ async function run() {
         const submit = core.getBooleanInput('submit');
         const stagedRollout = core.getBooleanInput('staged-rollout');
         const rolloutRate = parseInt(core.getInput('rollout-rate') || '0', 10);
+        const publicationType = core.getInput('publication-type') || '01';
+        const startPublicationDate = core.getInput('start-publication-date') || undefined;
         if (!/^\d{12}$/.test(contentId)) {
             core.setFailed(`content-id must be a 12-digit number, got: '${contentId}'`);
             return;
@@ -34763,9 +34769,21 @@ async function run() {
             core.setFailed(`rollout-rate must be between 0 and 100 when staged-rollout is enabled, got: ${rolloutRate}`);
             return;
         }
+        if (!['01', '02', '03'].includes(publicationType)) {
+            core.setFailed(`publication-type must be 01, 02, or 03, got: '${publicationType}'`);
+            return;
+        }
+        if (publicationType === '02' && !startPublicationDate) {
+            core.setFailed('start-publication-date is required when publication-type is 02');
+            return;
+        }
+        if (startPublicationDate && !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(startPublicationDate)) {
+            core.setFailed(`start-publication-date must be in yyyy-MM-dd HH:mm:ss format, got: '${startPublicationDate}'`);
+            return;
+        }
         const client = new galaxyStoreClient_1.GalaxyStoreClient(serviceAccountId, accessToken);
         core.info(`Creating app update for content ID ${contentId}...`);
-        await client.createUpdate(contentId);
+        await client.createUpdate(contentId, publicationType, startPublicationDate);
         let binariesBefore;
         if (stagedRollout) {
             core.info('Fetching staged rollout binaries (REGISTRATION)...');

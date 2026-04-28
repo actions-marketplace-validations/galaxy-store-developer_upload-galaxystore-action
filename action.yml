@@ -18,6 +18,13 @@ inputs:
   binary-seq-for-device-info:
     description: 'Sequence number of the device info configuration for the binary. Only set if your app requires a specific device configuration sequence.'
     required: false
+  publication-type:
+    description: 'When the app is published: 01 = automatically after review, 02 = on a scheduled date, 03 = manually by the seller'
+    required: false
+    default: '01'
+  start-publication-date:
+    description: 'Publication date in yyyy-MM-dd HH:mm:ss format. Required when publication-type is 02.'
+    required: false
   submit:
     description: 'Whether to submit the app for review after uploading'
     required: false

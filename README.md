@@ -7,6 +7,7 @@ A GitHub Action to upload Android APK and AAB files to the Samsung Galaxy Store 
 - Upload `.apk` or `.aab` binaries to the Galaxy Store
 - Optionally submit the app for review after uploading
 - Optionally add the uploaded binary to a staged rollout group with a configurable rollout rate
+- Configurable publication type (automatic, scheduled, or manual)
 
 ## Usage
 
@@ -30,6 +31,20 @@ A GitHub Action to upload Android APK and AAB files to the Samsung Galaxy Store 
     service-account-id: ${{ secrets.GALAXY_SERVICE_ACCOUNT_ID }}
     content-id: '000012345678'
     package-path: './app-release.aab'
+    submit: true
+```
+
+### Upload with scheduled publication
+
+```yaml
+- uses: cristian-samsung/upload-galaxystore-action@main
+  with:
+    access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
+    service-account-id: ${{ secrets.GALAXY_SERVICE_ACCOUNT_ID }}
+    content-id: '000012345678'
+    package-path: './app-release.aab'
+    publication-type: '02'
+    start-publication-date: '2026-06-01 09:00:00'
     submit: true
 ```
 
@@ -57,6 +72,8 @@ A GitHub Action to upload Android APK and AAB files to the Samsung Galaxy Store 
 | `content-id` | Yes | | 12-digit content ID of the app in the Galaxy Store |
 | `package-path` | Yes | | Path to the `.apk` or `.aab` file to upload |
 | `binary-seq-for-device-info` | No | | Sequence number of the device info configuration for the binary. Only set if your app requires a specific device configuration sequence. |
+| `publication-type` | No | `01` | When the app is published: `01` = automatically after review, `02` = on a scheduled date, `03` = manually by the seller |
+| `start-publication-date` | No | | Publication date in `yyyy-MM-dd HH:mm:ss` format. Required when `publication-type` is `02`. |
 | `submit` | No | `false` | Whether to submit the app for review after uploading |
 | `staged-rollout` | No | `false` | Whether to add the uploaded binary to a staged rollout group |
 | `rollout-rate` | No | `0` | Staged rollout percentage (0-100). Only used when `staged-rollout` is `true`. |

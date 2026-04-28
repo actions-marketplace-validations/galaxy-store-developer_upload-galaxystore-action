@@ -84,8 +84,12 @@ export class GalaxyStoreClient {
     return response.data;
   }
 
-  async createUpdate(contentId: string): Promise<void> {
-    await this.client.post(`${BASE_URL}/seller/contentUpdate`, { contentId });
+  async createUpdate(contentId: string, publicationType: string, startPublicationDate?: string): Promise<void> {
+    const body: Record<string, string> = { contentId, publicationType };
+    if (startPublicationDate) {
+      body.startPublicationDate = startPublicationDate;
+    }
+    await this.client.post(`${BASE_URL}/seller/contentUpdate`, body);
   }
 
   async addBinary(contentId: string, fileKey: string, binarySeqForDeviceInfo?: string): Promise<unknown> {

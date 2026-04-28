@@ -13,6 +13,8 @@ async function run(): Promise<void> {
     const submit = core.getBooleanInput('submit');
     const stagedRollout = core.getBooleanInput('staged-rollout');
     const rolloutRate = parseInt(core.getInput('rollout-rate') || '0', 10);
+    const publicationType = core.getInput('publication-type') || '01';
+    const startPublicationDate = core.getInput('start-publication-date') || undefined;
 
     if (!/^\d{12}$/.test(contentId)) {
       core.setFailed(`content-id must be a 12-digit number, got: '${contentId}'`);
@@ -35,10 +37,25 @@ async function run(): Promise<void> {
       return;
     }
 
+    if (!['01', '02', '03'].includes(publicationType)) {
+      core.setFailed(`publication-type must be 01, 02, or 03, got: '${publicationType}'`);
+      return;
+    }
+
+    if (publicationType === '02' && !startPublicationDate) {
+      core.setFailed('start-publication-date is required when publication-type is 02');
+      return;
+    }
+
+    if (startPublicationDate && !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(startPublicationDate)) {
+      core.setFailed(`start-publication-date must be in yyyy-MM-dd HH:mm:ss format, got: '${startPublicationDate}'`);
+      return;
+    }
+
     const client = new GalaxyStoreClient(serviceAccountId, accessToken);
 
     core.info(`Creating app update for content ID ${contentId}...`);
-    await client.createUpdate(contentId);
+    await client.createUpdate(contentId, publicationType, startPublicationDate);
 
     let binariesBefore: Set<number> | undefined;
     if (stagedRollout) {
