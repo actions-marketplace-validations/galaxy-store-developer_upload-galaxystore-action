@@ -22,10 +22,20 @@ inputs:
     description: 'Whether to submit the app for review after uploading'
     required: false
     default: 'false'
+  staged-rollout:
+    description: 'Whether to add the uploaded binary to a staged rollout group'
+    required: false
+    default: 'false'
+  rollout-rate:
+    description: 'Staged rollout percentage (0-100). Only used when staged-rollout is true.'
+    required: false
+    default: '0'
 
 outputs:
   upload-result:
     description: 'JSON string containing the add binary API response'
+  binary-seq:
+    description: 'The binary sequence number of the uploaded binary (only set when staged-rollout is true)'
 
 runs:
   using: 'node24'

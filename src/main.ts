@@ -11,6 +11,8 @@ async function run(): Promise<void> {
     const packagePath = core.getInput('package-path', { required: true });
     const binarySeqForDeviceInfo = core.getInput('binary-seq-for-device-info') || undefined;
     const submit = core.getBooleanInput('submit');
+    const stagedRollout = core.getBooleanInput('staged-rollout');
+    const rolloutRate = parseInt(core.getInput('rollout-rate') || '0', 10);
 
     if (!/^\d{12}$/.test(contentId)) {
       core.setFailed(`content-id must be a 12-digit number, got: '${contentId}'`);
@@ -28,10 +30,21 @@ async function run(): Promise<void> {
       return;
     }
 
+    if (stagedRollout && (rolloutRate < 0 || rolloutRate > 100)) {
+      core.setFailed(`rollout-rate must be between 0 and 100 when staged-rollout is enabled, got: ${rolloutRate}`);
+      return;
+    }
+
     const client = new GalaxyStoreClient(serviceAccountId, accessToken);
 
     core.info(`Creating app update for content ID ${contentId}...`);
     await client.createUpdate(contentId);
+
+    let binariesBefore: Set<number> | undefined;
+    if (stagedRollout) {
+      const before = await client.getStagedRolloutBinaries(contentId);
+      binariesBefore = new Set(before.map(b => b.seq));
+    }
 
     core.info(`Uploading ${path.basename(packagePath)}...`);
     const uploadResult = await client.uploadFile(packagePath);
@@ -43,6 +56,30 @@ async function run(): Promise<void> {
     core.info('Binary added successfully');
 
     core.setOutput('upload-result', JSON.stringify(result));
+
+    if (stagedRollout) {
+      core.info('Resolving binary sequence for staged rollout...');
+      const after = await client.getStagedRolloutBinaries(contentId);
+      const newBinaries = after.filter(b => !binariesBefore!.has(b.seq));
+
+      if (newBinaries.length === 0) {
+        throw new Error('Could not determine the new binary sequence for staged rollout: no new binaries found after upload');
+      }
+      if (newBinaries.length > 1) {
+        core.warning(`Multiple new binaries detected (seqs: ${newBinaries.map(b => b.seq).join(', ')}). Using the last one.`);
+      }
+
+      const binarySeq = newBinaries[newBinaries.length - 1].seq;
+      core.info(`Adding binary seq ${binarySeq} to staged rollout...`);
+      await client.addStagedRolloutBinary(contentId, binarySeq);
+      core.info('Binary added to staged rollout successfully');
+
+      core.info(`Setting staged rollout rate to ${rolloutRate}%...`);
+      await client.setStagedRolloutRate(contentId, rolloutRate);
+      core.info('Staged rollout rate set successfully');
+
+      core.setOutput('binary-seq', String(binarySeq));
+    }
 
     if (submit) {
       core.info(`Submitting app for review...`);

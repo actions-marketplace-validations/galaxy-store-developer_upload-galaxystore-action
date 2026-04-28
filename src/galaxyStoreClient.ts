@@ -21,6 +21,16 @@ export interface UploadResult {
   [key: string]: unknown;
 }
 
+export interface StagedRolloutBinary {
+  seq: number;
+  versionCode: string;
+  versionName: string;
+  fileName: string;
+  fileSize: string;
+  rolloutStatus: string;
+  appStatus: string;
+}
+
 export class GalaxyStoreClient {
   private client: AxiosInstance;
   private serviceAccountId: string;
@@ -101,6 +111,33 @@ export class GalaxyStoreClient {
 
   async submitApp(contentId: string): Promise<unknown> {
     const response = await this.client.post(`${BASE_URL}/seller/contentSubmit`, { contentId });
+    return response.data;
+  }
+
+  async getStagedRolloutBinaries(contentId: string): Promise<StagedRolloutBinary[]> {
+    const response = await this.client.get<{ data: { binaries: StagedRolloutBinary[] } }>(
+      `${BASE_URL}/seller/v2/content/stagedRolloutBinary`,
+      { params: { contentId } }
+    );
+    return response.data.data.binaries ?? [];
+  }
+
+  async addStagedRolloutBinary(contentId: string, binarySeq: number): Promise<unknown> {
+    const response = await this.client.put(`${BASE_URL}/seller/v2/content/stagedRolloutBinary`, {
+      contentId,
+      function: 'ADD',
+      binarySeq: String(binarySeq)
+    });
+    return response.data;
+  }
+
+  async setStagedRolloutRate(contentId: string, rolloutRate: number): Promise<unknown> {
+    const response = await this.client.put(`${BASE_URL}/seller/v2/content/stagedRolloutRate`, {
+      contentId,
+      function: 'ENABLE_ROLLOUT',
+      appStatus: 'REGISTRATION',
+      rolloutRate
+    });
     return response.data;
   }
 }

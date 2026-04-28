@@ -15,10 +15,17 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload to Galaxy Store
+        id: upload
         uses: ./
         with:
           access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
           service-account-id: ${{ secrets.GALAXY_SERVICE_ACCOUNT_ID }}
           content-id: ${{ vars.GALAXY_CONTENT_ID }}
           package-path: './app-release_v101.aab'
+          staged-rollout: true
+          rollout-rate: 10
           submit: true
+
+      - name: Print binary seq
+        if: steps.upload.outputs.binary-seq
+        run: echo "Binary seq:" ${{ steps.upload.outputs.binary-seq }}
