@@ -34648,9 +34648,17 @@ class GalaxyStoreClient {
         const response = await this.client.post(`${BASE_URL}/seller/contentSubmit`, { contentId });
         return response.data;
     }
-    async getStagedRolloutBinaries(contentId) {
-        const response = await this.client.get(`${BASE_URL}/seller/v2/content/stagedRolloutBinary`, { params: { contentId } });
-        return response.data.data.binaries ?? [];
+    async getStagedRolloutBinaries(contentId, appStatus) {
+        try {
+            const response = await this.client.get(`${BASE_URL}/seller/v2/content/stagedRolloutBinary`, { params: { contentId, appStatus } });
+            return response.data.data.binaries ?? [];
+        }
+        catch (error) {
+            if (error instanceof Error && error.message.includes('HTTP 404')) {
+                return [];
+            }
+            throw error;
+        }
     }
     async addStagedRolloutBinary(contentId, binarySeq) {
         const response = await this.client.put(`${BASE_URL}/seller/v2/content/stagedRolloutBinary`, {
@@ -34760,7 +34768,13 @@ async function run() {
         await client.createUpdate(contentId);
         let binariesBefore;
         if (stagedRollout) {
-            const before = await client.getStagedRolloutBinaries(contentId);
+            core.info('Fetching staged rollout binaries (REGISTRATION)...');
+            let before = await client.getStagedRolloutBinaries(contentId, 'REGISTRATION');
+            if (before.length === 0) {
+                core.info('No REGISTRATION binaries found, fetching SALE binaries as baseline...');
+                before = await client.getStagedRolloutBinaries(contentId, 'SALE');
+            }
+            core.info(`Baseline binaries (seqs: ${before.map(b => b.seq).join(', ') || 'none'})`);
             binariesBefore = new Set(before.map(b => b.seq));
         }
         core.info(`Uploading ${path.basename(packagePath)}...`);
@@ -34772,8 +34786,9 @@ async function run() {
         core.info('Binary added successfully');
         core.setOutput('upload-result', JSON.stringify(result));
         if (stagedRollout) {
-            core.info('Resolving binary sequence for staged rollout...');
-            const after = await client.getStagedRolloutBinaries(contentId);
+            core.info('Fetching staged rollout binaries after upload (REGISTRATION)...');
+            const after = await client.getStagedRolloutBinaries(contentId, 'REGISTRATION');
+            core.info(`Post-upload binaries (seqs: ${after.map(b => b.seq).join(', ') || 'none'})`);
             const newBinaries = after.filter(b => !binariesBefore.has(b.seq));
             if (newBinaries.length === 0) {
                 throw new Error('Could not determine the new binary sequence for staged rollout: no new binaries found after upload');
