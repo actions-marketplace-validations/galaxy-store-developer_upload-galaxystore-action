@@ -42,7 +42,10 @@ async function run(): Promise<void> {
 
     let binariesBefore: Set<number> | undefined;
     if (stagedRollout) {
-      const before = await client.getStagedRolloutBinaries(contentId);
+      let before = await client.getStagedRolloutBinaries(contentId, 'REGISTRATION');
+      if (before.length === 0) {
+        before = await client.getStagedRolloutBinaries(contentId, 'SALE');
+      }
       binariesBefore = new Set(before.map(b => b.seq));
     }
 
@@ -59,7 +62,7 @@ async function run(): Promise<void> {
 
     if (stagedRollout) {
       core.info('Resolving binary sequence for staged rollout...');
-      const after = await client.getStagedRolloutBinaries(contentId);
+      const after = await client.getStagedRolloutBinaries(contentId, 'REGISTRATION');
       const newBinaries = after.filter(b => !binariesBefore!.has(b.seq));
 
       if (newBinaries.length === 0) {

@@ -114,10 +114,10 @@ export class GalaxyStoreClient {
     return response.data;
   }
 
-  async getStagedRolloutBinaries(contentId: string): Promise<StagedRolloutBinary[]> {
+  async getStagedRolloutBinaries(contentId: string, appStatus: 'REGISTRATION' | 'SALE'): Promise<StagedRolloutBinary[]> {
     const response = await this.client.get<{ data: { binaries: StagedRolloutBinary[] } }>(
       `${BASE_URL}/seller/v2/content/stagedRolloutBinary`,
-      { params: { contentId } }
+      { params: { contentId, appStatus } }
     );
     return response.data.data.binaries ?? [];
   }
