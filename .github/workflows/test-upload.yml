@@ -21,3 +21,4 @@ jobs:
           service-account-id: ${{ secrets.GALAXY_SERVICE_ACCOUNT_ID }}
           content-id: ${{ vars.GALAXY_CONTENT_ID }}
           package-path: './app-release_v101.aab'
+          submit: true

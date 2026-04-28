@@ -10,6 +10,7 @@ async function run(): Promise<void> {
     const contentId = core.getInput('content-id', { required: true });
     const packagePath = core.getInput('package-path', { required: true });
     const binarySeqForDeviceInfo = core.getInput('binary-seq-for-device-info') || undefined;
+    const submit = core.getBooleanInput('submit');
 
     if (!/^\d{12}$/.test(contentId)) {
       core.setFailed(`content-id must be a 12-digit number, got: '${contentId}'`);
@@ -42,6 +43,12 @@ async function run(): Promise<void> {
     core.info('Binary added successfully');
 
     core.setOutput('upload-result', JSON.stringify(result));
+
+    if (submit) {
+      core.info(`Submitting app for review...`);
+      await client.submitApp(contentId);
+      core.info('App submitted successfully');
+    }
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message);

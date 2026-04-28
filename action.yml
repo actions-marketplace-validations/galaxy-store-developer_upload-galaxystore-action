@@ -18,6 +18,10 @@ inputs:
   binary-seq-for-device-info:
     description: 'Sequence number of the device info configuration for the binary. Only set if your app requires a specific device configuration sequence.'
     required: false
+  submit:
+    description: 'Whether to submit the app for review after uploading'
+    required: false
+    default: 'false'
 
 outputs:
   upload-result:
