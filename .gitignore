@@ -3,3 +3,4 @@ dist/*
 !dist/index.js
 !dist/licenses.txt
 *.js.map
+CLAUDE.md

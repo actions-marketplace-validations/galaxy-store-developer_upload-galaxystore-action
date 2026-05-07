@@ -3,8 +3,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { GalaxyStoreClient } from './galaxyStoreClient';
 
-async function run(): Promise<void> {
+// Main entry point for the GitHub Action. Reads inputs, validates, and orchestrates the upload flow.
+export async function run(): Promise<void> {
   try {
+    // Read action inputs
     const accessToken = core.getInput('access-token', { required: true });
     const serviceAccountId = core.getInput('service-account-id', { required: true });
     const contentId = core.getInput('content-id', { required: true });
@@ -54,9 +56,11 @@ async function run(): Promise<void> {
 
     const client = new GalaxyStoreClient(serviceAccountId, accessToken);
 
+    // Step 1: Open an update session for the app
     core.info(`Creating app update for content ID ${contentId}...`);
     await client.createUpdate(contentId, publicationType, startPublicationDate);
 
+    // Snapshot existing binaries before upload so we can diff later to find the new one
     let binariesBefore: Set<number> | undefined;
     if (stagedRollout) {
       core.info('Fetching staged rollout binaries (REGISTRATION)...');
@@ -69,17 +73,20 @@ async function run(): Promise<void> {
       binariesBefore = new Set(before.map(b => b.seq));
     }
 
+    // Step 2: Upload the binary file and get a fileKey
     core.info(`Uploading ${path.basename(packagePath)}...`);
     const uploadResult = await client.uploadFile(packagePath);
     const fileKey = uploadResult.fileKey;
     core.info(`File uploaded successfully, file key: ${fileKey}`);
 
+    // Step 3: Register the uploaded binary against the content ID
     core.info(`Adding binary to content ID ${contentId}...`);
     const result = await client.addBinary(contentId, fileKey, binarySeqForDeviceInfo);
     core.info('Binary added successfully');
 
     core.setOutput('upload-result', JSON.stringify(result));
 
+    // Step 4 (optional): Add binary to staged rollout and set rollout rate
     if (stagedRollout) {
       core.info('Fetching staged rollout binaries after upload (REGISTRATION)...');
       const after = await client.getStagedRolloutBinaries(contentId, 'REGISTRATION');
@@ -105,6 +112,7 @@ async function run(): Promise<void> {
       core.setOutput('binary-seq', String(binarySeq));
     }
 
+    // Step 5 (optional): Submit the app for review
     if (submit) {
       core.info(`Submitting app for review...`);
       await client.submitApp(contentId);
@@ -119,4 +127,8 @@ async function run(): Promise<void> {
   }
 }
 
-run();
+/* istanbul ignore next */
+if (!process.env.JEST_WORKER_ID) {
+  run();
+}
+

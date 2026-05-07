@@ -31,6 +31,8 @@ export interface StagedRolloutBinary {
   appStatus: string;
 }
 
+// Client for the Samsung Galaxy Store Seller API.
+// Handles authentication and wraps all API calls used by this action.
 export class GalaxyStoreClient {
   private client: AxiosInstance;
   private serviceAccountId: string;
@@ -56,6 +58,7 @@ export class GalaxyStoreClient {
     );
   }
 
+  // Get a session ID required by the file upload endpoint
   async createUploadSessionId(): Promise<string> {
     const response = await this.client.post<{ sessionId: string }>(
       `${BASE_URL}/seller/createUploadSessionId`
@@ -63,6 +66,7 @@ export class GalaxyStoreClient {
     return response.data.sessionId;
   }
 
+  // Upload a binary file. Uses a separate host from the rest of the API.
   async uploadFile(filePath: string): Promise<UploadResult> {
     const sessionId = await this.createUploadSessionId();
 
@@ -84,6 +88,7 @@ export class GalaxyStoreClient {
     return response.data;
   }
 
+  // Open an update session for the app, specifying how/when to publish
   async createUpdate(contentId: string, publicationType: string, startPublicationDate?: string): Promise<void> {
     const body: Record<string, string> = { contentId, publicationType };
     if (startPublicationDate) {
@@ -92,6 +97,7 @@ export class GalaxyStoreClient {
     await this.client.post(`${BASE_URL}/seller/contentUpdate`, body);
   }
 
+  // Register an uploaded binary (by fileKey) against a content ID
   async addBinary(contentId: string, fileKey: string, binarySeqForDeviceInfo?: string): Promise<unknown> {
     const body: Record<string, string> = {
       contentId,
@@ -105,6 +111,7 @@ export class GalaxyStoreClient {
     return response.data;
   }
 
+  // Fetch app metadata (not currently used by the action, available for future use)
   async getAppInfo(contentId: string): Promise<AppInfo[]> {
     const response = await this.client.get<AppInfo[]>(
       `${BASE_URL}/seller/contentInfo`,
@@ -113,11 +120,13 @@ export class GalaxyStoreClient {
     return response.data;
   }
 
+  // Submit the app for review
   async submitApp(contentId: string): Promise<unknown> {
     const response = await this.client.post(`${BASE_URL}/seller/contentSubmit`, { contentId });
     return response.data;
   }
 
+  // List binaries in a staged rollout group. Returns empty array if none exist (API returns 404).
   async getStagedRolloutBinaries(contentId: string, appStatus: 'REGISTRATION' | 'SALE'): Promise<StagedRolloutBinary[]> {
     try {
       const response = await this.client.get<{ data: { binaries: StagedRolloutBinary[] } }>(
@@ -133,6 +142,7 @@ export class GalaxyStoreClient {
     }
   }
 
+  // Add a binary (by seq number) to the staged rollout group
   async addStagedRolloutBinary(contentId: string, binarySeq: number): Promise<unknown> {
     const response = await this.client.put(`${BASE_URL}/seller/v2/content/stagedRolloutBinary`, {
       contentId,
@@ -142,6 +152,7 @@ export class GalaxyStoreClient {
     return response.data;
   }
 
+  // Set the rollout percentage for a staged rollout
   async setStagedRolloutRate(contentId: string, rolloutRate: number): Promise<unknown> {
     const response = await this.client.put(`${BASE_URL}/seller/v2/content/stagedRolloutRate`, {
       contentId,
