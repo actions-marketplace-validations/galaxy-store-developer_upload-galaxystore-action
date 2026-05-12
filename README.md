@@ -2,6 +2,8 @@
 
 A GitHub Action to upload Android APK and AAB files to the Samsung Galaxy Store via the Seller API.
 
+This action requires you to create a Galaxy Store service account and access token, more information can be found [here](https://developer.samsung.com/galaxy-store/galaxy-store-developer-api/create-an-access-token.html)
+
 ## Features
 
 - Upload `.apk` or `.aab` binaries to the Galaxy Store
@@ -63,7 +65,7 @@ A GitHub Action to upload Android APK and AAB files to the Samsung Galaxy Store 
     submit: true
 ```
 
-## Inputs
+## Parameters
 
 | Input | Required | Default | Description |
 |-------|----------|---------|-------------|
