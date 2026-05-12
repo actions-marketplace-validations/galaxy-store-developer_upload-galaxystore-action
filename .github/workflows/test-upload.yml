@@ -25,7 +25,7 @@ jobs:
           staged-rollout: true
           rollout-rate: 10
           publication-type: '03'
-          submit: true
+          submit: false
 
       - name: Print binary seq
         if: steps.upload.outputs.binary-seq
