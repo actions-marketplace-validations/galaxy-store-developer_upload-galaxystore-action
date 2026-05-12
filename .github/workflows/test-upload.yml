@@ -24,7 +24,8 @@ jobs:
           package-path: './app-release_v101.aab'
           staged-rollout: true
           rollout-rate: 10
-          submit: true
+          publication-type: '03'
+          submit: false
 
       - name: Print binary seq
         if: steps.upload.outputs.binary-seq
