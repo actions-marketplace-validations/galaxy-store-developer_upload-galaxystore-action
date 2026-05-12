@@ -2,7 +2,7 @@
 
 A GitHub Action to upload Android APK and AAB files to the Samsung Galaxy Store via the Seller API.
 
-This action requires you to create a Galaxy Store service account and access token, more information can be found [here](https://developer.samsung.com/galaxy-store/galaxy-store-developer-api/create-an-access-token.html)
+This action requires you to create a Galaxy Store service account and access token, more information can be found on the [Samsung Developer Portal](https://developer.samsung.com/galaxy-store/galaxy-store-developer-api/create-an-access-token.html)
 
 ## Features
 
@@ -32,6 +32,12 @@ This action requires you to create a Galaxy Store service account and access tok
 |--------|-------------|
 | `upload-result` | JSON string containing the add binary API response |
 | `binary-seq` | The binary sequence number of the uploaded binary (only set when `staged-rollout` is `true`) |
+
+## Authentication
+
+This action requires a Galaxy Store API access token and service account ID. These can be obtained from the [Samsung Galaxy Store Seller Portal](https://seller.samsungapps.com/).
+
+Store both values as [GitHub Actions secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions) in your repository.
 
 ## Usage
 
@@ -86,9 +92,3 @@ This action requires you to create a Galaxy Store service account and access tok
     rollout-rate: 10
     submit: true
 ```
-
-## Authentication
-
-This action requires a Galaxy Store API access token and service account ID. These can be obtained from the [Samsung Galaxy Store Seller Portal](https://seller.samsungapps.com/).
-
-Store both values as [GitHub Actions secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions) in your repository.
