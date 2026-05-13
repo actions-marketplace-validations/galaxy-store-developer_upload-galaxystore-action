@@ -92,3 +92,15 @@ Store both values as [GitHub Actions secrets](https://docs.github.com/en/actions
     rollout-rate: 10
     submit: true
 ```
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Build (must be run before committing changes)
+npm run build
+```
+
+The `dist/index.js` bundle must be committed as it is what GitHub Actions executes at runtime.
