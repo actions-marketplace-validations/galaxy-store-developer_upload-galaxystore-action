@@ -35778,6 +35778,8 @@ const fs = __importStar(__nccwpck_require__(9896));
 const path = __importStar(__nccwpck_require__(6928));
 const BASE_URL = 'https://devapi.samsungapps.com';
 const UPLOAD_URL = 'https://seller.samsungapps.com/galaxyapi/fileUpload';
+// Client for the Samsung Galaxy Store Seller API.
+// Handles authentication and wraps all API calls used by this action.
 class GalaxyStoreClient {
     client;
     serviceAccountId;
@@ -35797,10 +35799,12 @@ class GalaxyStoreClient {
             throw error;
         });
     }
+    // Get a session ID required by the file upload endpoint
     async createUploadSessionId() {
         const response = await this.client.post(`${BASE_URL}/seller/createUploadSessionId`);
         return response.data.sessionId;
     }
+    // Upload a binary file. Uses a separate host from the rest of the API.
     async uploadFile(filePath) {
         const sessionId = await this.createUploadSessionId();
         const form = new form_data_1.default();
@@ -35818,6 +35822,7 @@ class GalaxyStoreClient {
         });
         return response.data;
     }
+    // Open an update session for the app, specifying how/when to publish
     async createUpdate(contentId, publicationType, startPublicationDate) {
         const body = { contentId, publicationType };
         if (startPublicationDate) {
@@ -35825,6 +35830,7 @@ class GalaxyStoreClient {
         }
         await this.client.post(`${BASE_URL}/seller/contentUpdate`, body);
     }
+    // Register an uploaded binary (by fileKey) against a content ID
     async addBinary(contentId, fileKey, binarySeqForDeviceInfo) {
         const body = {
             contentId,
@@ -35837,14 +35843,17 @@ class GalaxyStoreClient {
         const response = await this.client.post(`${BASE_URL}/seller/v2/content/binary`, body);
         return response.data;
     }
+    // Fetch app metadata (not currently used by the action, available for future use)
     async getAppInfo(contentId) {
         const response = await this.client.get(`${BASE_URL}/seller/contentInfo`, { params: { contentId } });
         return response.data;
     }
+    // Submit the app for review
     async submitApp(contentId) {
         const response = await this.client.post(`${BASE_URL}/seller/contentSubmit`, { contentId });
         return response.data;
     }
+    // List binaries in a staged rollout group. Returns empty array if none exist (API returns 404).
     async getStagedRolloutBinaries(contentId, appStatus) {
         try {
             const response = await this.client.get(`${BASE_URL}/seller/v2/content/stagedRolloutBinary`, { params: { contentId, appStatus } });
@@ -35857,6 +35866,7 @@ class GalaxyStoreClient {
             throw error;
         }
     }
+    // Add a binary (by seq number) to the staged rollout group
     async addStagedRolloutBinary(contentId, binarySeq) {
         const response = await this.client.put(`${BASE_URL}/seller/v2/content/stagedRolloutBinary`, {
             contentId,
@@ -35865,6 +35875,7 @@ class GalaxyStoreClient {
         });
         return response.data;
     }
+    // Set the rollout percentage for a staged rollout
     async setStagedRolloutRate(contentId, rolloutRate) {
         const response = await this.client.put(`${BASE_URL}/seller/v2/content/stagedRolloutRate`, {
             contentId,
@@ -35934,8 +35945,10 @@ const core = __importStar(__nccwpck_require__(7484));
 const fs = __importStar(__nccwpck_require__(9896));
 const path = __importStar(__nccwpck_require__(6928));
 const galaxyStoreClient_1 = __nccwpck_require__(97);
+// Main entry point for the GitHub Action. Reads inputs, validates, and orchestrates the upload flow.
 async function run() {
     try {
+        // Read action inputs
         const accessToken = core.getInput('access-token', { required: true });
         const serviceAccountId = core.getInput('service-account-id', { required: true });
         const contentId = core.getInput('content-id', { required: true });
@@ -35976,8 +35989,10 @@ async function run() {
             return;
         }
         const client = new galaxyStoreClient_1.GalaxyStoreClient(serviceAccountId, accessToken);
+        // Step 1: Open an update session for the app
         core.info(`Creating app update for content ID ${contentId}...`);
         await client.createUpdate(contentId, publicationType, startPublicationDate);
+        // Snapshot existing binaries before upload so we can diff later to find the new one
         let binariesBefore;
         if (stagedRollout) {
             core.info('Fetching staged rollout binaries (REGISTRATION)...');
@@ -35989,14 +36004,17 @@ async function run() {
             core.info(`Baseline binaries (seqs: ${before.map(b => b.seq).join(', ') || 'none'})`);
             binariesBefore = new Set(before.map(b => b.seq));
         }
+        // Step 2: Upload the binary file and get a fileKey
         core.info(`Uploading ${path.basename(packagePath)}...`);
         const uploadResult = await client.uploadFile(packagePath);
         const fileKey = uploadResult.fileKey;
         core.info(`File uploaded successfully, file key: ${fileKey}`);
+        // Step 3: Register the uploaded binary against the content ID
         core.info(`Adding binary to content ID ${contentId}...`);
         const result = await client.addBinary(contentId, fileKey, binarySeqForDeviceInfo);
         core.info('Binary added successfully');
         core.setOutput('upload-result', JSON.stringify(result));
+        // Step 4 (optional): Add binary to staged rollout and set rollout rate
         if (stagedRollout) {
             core.info('Fetching staged rollout binaries after upload (REGISTRATION)...');
             const after = await client.getStagedRolloutBinaries(contentId, 'REGISTRATION');
@@ -36017,6 +36035,7 @@ async function run() {
             core.info('Staged rollout rate set successfully');
             core.setOutput('binary-seq', String(binarySeq));
         }
+        // Step 5 (optional): Submit the app for review
         if (submit) {
             core.info(`Submitting app for review...`);
             await client.submitApp(contentId);
