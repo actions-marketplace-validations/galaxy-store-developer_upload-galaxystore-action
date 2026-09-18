@@ -1,6 +1,6 @@
 {
   "name": "upload-galaxystore-action",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "GitHub Action for uploading Android apps to the Samsung Galaxy Store",
   "main": "dist/index.js",
   "scripts": {
@@ -12,8 +12,7 @@
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^2.0.3",
-    "axios": "^1.15.0",
-    "form-data": "^4.0.5"
+    "axios": "^1.20.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
@@ -23,5 +22,8 @@
     "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.2"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

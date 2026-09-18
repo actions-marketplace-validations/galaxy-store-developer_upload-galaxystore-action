@@ -7,7 +7,7 @@ jobs:
   upload:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Download test AAB
         run: gh release download v0.1-test-assets --pattern "app-release_v101.aab" --repo cristian-samsung/upload-galaxystore-action
@@ -29,4 +29,6 @@ jobs:
 
       - name: Print binary seq
         if: steps.upload.outputs.binary-seq
-        run: echo "Binary seq:" ${{ steps.upload.outputs.binary-seq }}
+        env:
+          BINARY_SEQ: ${{ steps.upload.outputs.binary-seq }}
+        run: echo "Binary seq: $BINARY_SEQ"
