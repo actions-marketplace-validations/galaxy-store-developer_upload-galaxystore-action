@@ -5,14 +5,17 @@ on:
 
 jobs:
   upload:
-    runs-on: ubuntu-latest
+    runs-on: code-linux
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
+      # Expects a release tagged v0.1-test-assets in this repository containing app-release_v101.aab.
+      # The host is derived from GITHUB_SERVER_URL so this works on github.com and GitHub Enterprise.
       - name: Download test AAB
-        run: gh release download v0.1-test-assets --pattern "app-release_v101.aab" --repo cristian-samsung/upload-galaxystore-action
+        run: gh release download v0.1-test-assets --pattern "app-release_v101.aab" --repo "${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ENTERPRISE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload to Galaxy Store
         id: upload
@@ -29,4 +32,6 @@ jobs:
 
       - name: Print binary seq
         if: steps.upload.outputs.binary-seq
-        run: echo "Binary seq:" ${{ steps.upload.outputs.binary-seq }}
+        env:
+          BINARY_SEQ: ${{ steps.upload.outputs.binary-seq }}
+        run: echo "Binary seq: $BINARY_SEQ"

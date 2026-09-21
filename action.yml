@@ -16,7 +16,7 @@ inputs:
     description: 'Path to the .apk or .aab file to upload'
     required: true
   binary-seq-for-device-info:
-    description: 'Sequence number of the device info configuration for the binary. Only set if your app requires a specific device configuration sequence.'
+    description: 'binarySeq of an existing binary whose device configuration should be copied to the new binary. Obtain it from the binaryList in GET /seller/contentInfo. Only set if your app requires a specific device configuration.'
     required: false
   publication-type:
     description: 'When the app is published: 01 = automatically after review, 02 = on a scheduled date, 03 = manually by the seller'
@@ -34,9 +34,12 @@ inputs:
     required: false
     default: 'false'
   rollout-rate:
-    description: 'Staged rollout percentage (0-100). Only used when staged-rollout is true.'
+    description: 'Staged rollout percentage as an integer from 1 to 100. Required when staged-rollout is true; ignored otherwise.'
     required: false
-    default: '0'
+  disable-existing-rollout:
+    description: 'When staged-rollout is true, disable any staged rollout that is still active (below 100%) on the LIVE version of the app before enabling the new one. Samsung requires this, but it changes the live app, so it is off by default.'
+    required: false
+    default: 'false'
 
 outputs:
   upload-result:
