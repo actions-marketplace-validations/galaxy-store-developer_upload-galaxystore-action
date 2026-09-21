@@ -51,6 +51,14 @@ The action calls `core.setSecret` on the token, so it is masked in logs even if 
 
 Pin to a release tag (or a full commit SHA) rather than `@main` so that changes to this action cannot alter your release pipeline without review.
 
+The examples below reference the public repository on github.com. If your workflow runs on Samsung's internal GitHub Enterprise, reference the mirrored repository instead:
+
+```yaml
+- uses: NACS/upload-galaxystore-action@v1
+```
+
+Everything else (inputs, outputs, secrets) is identical on both hosts.
+
 ### Basic upload
 
 ```yaml
