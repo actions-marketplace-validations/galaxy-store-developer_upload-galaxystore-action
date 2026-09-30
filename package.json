@@ -9,7 +9,7 @@
   },
   "keywords": [],
   "author": "Cristian Lewczyk",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
     "@actions/core": "^2.0.3",
     "axios": "^1.20.0"

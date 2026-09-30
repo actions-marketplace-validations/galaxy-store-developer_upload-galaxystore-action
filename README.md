@@ -185,3 +185,7 @@ The `dist/index.js` bundle must be committed as it is what GitHub Actions execut
    git push origin v1.1.0
    git push -f origin v1
    ```
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE).
