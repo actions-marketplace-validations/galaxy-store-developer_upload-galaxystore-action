@@ -7,6 +7,8 @@ const BASE_URL = 'https://devapi.samsungapps.com';
 const DEFAULT_UPLOAD_URL = 'https://seller.samsungapps.com/galaxyapi/fileUpload';
 const REQUEST_TIMEOUT_MS = 60_000;
 const UPLOAD_TIMEOUT_MS = 15 * 60_000;
+// Identifies traffic from this action so Samsung can filter it server-side
+export const CLIENT_SOURCE = 'gh-action-galaxystore';
 
 export type AppStatus = 'REGISTRATION' | 'SALE';
 
@@ -98,7 +100,8 @@ export class GalaxyStoreClient {
       timeout: REQUEST_TIMEOUT_MS,
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'service-account-id': serviceAccountId
+        'service-account-id': serviceAccountId,
+        'X-Client-Source': CLIENT_SOURCE
       }
     });
 

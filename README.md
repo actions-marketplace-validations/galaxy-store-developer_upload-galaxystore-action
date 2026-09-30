@@ -146,6 +146,8 @@ If the add-binary response does not include `binarySeq` (API releases before 202
 
 In `update-rollout` mode it calls `GET /seller/v2/content/stagedRolloutRate` for the chosen `appStatus`, verifies the requested rate is higher, then `PUT /seller/v2/content/stagedRolloutRate` with `ENABLE_ROLLOUT` and the new rate.
 
+Every request carries an `X-Client-Source: gh-action-galaxystore` header so that traffic from this action can be identified on Samsung's side.
+
 ## Notes and caveats
 
 ### Publication types

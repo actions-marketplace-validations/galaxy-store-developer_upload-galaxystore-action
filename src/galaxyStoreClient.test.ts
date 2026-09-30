@@ -48,13 +48,17 @@ beforeEach(() => {
 
 describe('GalaxyStoreClient', () => {
   describe('constructor', () => {
-    test('configures auth headers and a request timeout', () => {
+    test('configures auth headers, the client source tag, and a request timeout', () => {
       new GalaxyStoreClient('account-id', 'token');
 
       expect(axios.create).toHaveBeenCalledWith(
         expect.objectContaining({
           timeout: expect.any(Number),
-          headers: { Authorization: 'Bearer token', 'service-account-id': 'account-id' }
+          headers: {
+            Authorization: 'Bearer token',
+            'service-account-id': 'account-id',
+            'X-Client-Source': 'gh-action-galaxystore'
+          }
         })
       );
     });

@@ -36749,7 +36749,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.GalaxyStoreClient = exports.GalaxyStoreApiError = void 0;
+exports.GalaxyStoreClient = exports.GalaxyStoreApiError = exports.CLIENT_SOURCE = void 0;
 const axios_1 = __importDefault(__nccwpck_require__(7269));
 const fs = __importStar(__nccwpck_require__(9896));
 const path = __importStar(__nccwpck_require__(6928));
@@ -36758,6 +36758,8 @@ const BASE_URL = 'https://devapi.samsungapps.com';
 const DEFAULT_UPLOAD_URL = 'https://seller.samsungapps.com/galaxyapi/fileUpload';
 const REQUEST_TIMEOUT_MS = 60_000;
 const UPLOAD_TIMEOUT_MS = 15 * 60_000;
+// Identifies traffic from this action so Samsung can filter it server-side
+exports.CLIENT_SOURCE = 'gh-action-galaxystore';
 // Thrown for any HTTP error response from the Galaxy Store API. Carries the status code and the
 // parsed response body so callers can branch on status instead of parsing message strings.
 class GalaxyStoreApiError extends Error {
@@ -36785,7 +36787,8 @@ class GalaxyStoreClient {
             timeout: REQUEST_TIMEOUT_MS,
             headers: {
                 Authorization: `Bearer ${accessToken}`,
-                'service-account-id': serviceAccountId
+                'service-account-id': serviceAccountId,
+                'X-Client-Source': exports.CLIENT_SOURCE
             }
         });
         this.client.interceptors.response.use(response => response, (error) => {
