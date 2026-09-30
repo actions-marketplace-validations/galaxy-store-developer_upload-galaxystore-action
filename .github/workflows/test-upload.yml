@@ -2,6 +2,19 @@ name: Test Galaxy Store Upload
 
 on:
   workflow_dispatch: # manual trigger only
+    inputs:
+      asset-name:
+        description: 'File name of the .apk/.aab asset to download from the v0.1-test-assets release'
+        required: true
+        default: 'app-release_v102.aab'
+      rollout-rate:
+        description: 'Staged rollout percentage (1-100)'
+        required: true
+        default: '10'
+      disable-existing-rollout:
+        description: 'Disable a staged rollout still below 100% on the LIVE version before enabling the new one'
+        type: boolean
+        default: false
 
 jobs:
   upload:
@@ -9,11 +22,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Expects a release tagged v0.1-test-assets in this repository containing app-release_v101.aab.
+      # Downloads the chosen asset from the v0.1-test-assets release in this repository.
       # The host is derived from GITHUB_SERVER_URL so this works on github.com and GitHub Enterprise.
-      - name: Download test AAB
-        run: gh release download v0.1-test-assets --pattern "app-release_v101.aab" --repo "${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}"
+      - name: Download test binary
+        run: |
+          gh release download v0.1-test-assets --pattern "$ASSET_NAME" --repo "${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}"
+          ls -l "$ASSET_NAME"
         env:
+          ASSET_NAME: ${{ inputs.asset-name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_ENTERPRISE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -24,9 +40,10 @@ jobs:
           access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
           service-account-id: ${{ secrets.GALAXY_SERVICE_ACCOUNT_ID }}
           content-id: ${{ vars.GALAXY_CONTENT_ID }}
-          package-path: './app-release_v101.aab'
+          package-path: ./${{ inputs.asset-name }}
           staged-rollout: true
-          rollout-rate: 10
+          rollout-rate: ${{ inputs.rollout-rate }}
+          disable-existing-rollout: ${{ inputs.disable-existing-rollout }}
           publication-type: '03'
           submit: false
 
