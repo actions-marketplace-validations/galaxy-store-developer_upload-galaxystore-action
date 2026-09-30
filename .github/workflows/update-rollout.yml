@@ -1,0 +1,47 @@
+name: Update Staged Rollout Rate
+
+on:
+  workflow_dispatch: # manual trigger only
+    inputs:
+      rollout-app-status:
+        description: 'Which version to change: SALE = the live version users have now, REGISTRATION = a pending update'
+        type: choice
+        options:
+          - REGISTRATION
+          - SALE
+        default: REGISTRATION
+        required: true
+      rollout-rate:
+        description: 'New staged rollout percentage (1-100). Must be higher than the current rate.'
+        required: true
+        default: '25'
+
+jobs:
+  update-rollout:
+    runs-on: code-linux
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update staged rollout rate
+        id: rollout
+        uses: ./
+        with:
+          mode: update-rollout
+          access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
+          service-account-id: ${{ secrets.GALAXY_SERVICE_ACCOUNT_ID }}
+          content-id: ${{ vars.GALAXY_CONTENT_ID }}
+          rollout-app-status: ${{ inputs.rollout-app-status }}
+          rollout-rate: ${{ inputs.rollout-rate }}
+
+      - name: Summary
+        if: always() && steps.rollout.outputs.previous-rollout-rate
+        env:
+          APP_STATUS: ${{ inputs.rollout-app-status }}
+          PREVIOUS_RATE: ${{ steps.rollout.outputs.previous-rollout-rate }}
+          NEW_RATE: ${{ inputs.rollout-rate }}
+          OUTCOME: ${{ steps.rollout.outcome }}
+        run: |
+          echo "Version:       $APP_STATUS"
+          echo "Previous rate: $PREVIOUS_RATE%"
+          echo "Requested:     $NEW_RATE%"
+          echo "Outcome:       $OUTCOME"
