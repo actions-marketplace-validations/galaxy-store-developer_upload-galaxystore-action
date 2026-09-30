@@ -58,7 +58,7 @@ Pin to a release tag (or a full commit SHA) rather than `@main` so that changes 
 ### Basic upload
 
 ```yaml
-- uses: cristian-samsung/upload-galaxystore-action@v1
+- uses: cristian-samsung/upload-galaxystore-action@v1.2.0
   with:
     access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
     service-account-id: ${{ secrets.GALAXY_SERVICE_ACCOUNT_ID }}
@@ -69,7 +69,7 @@ Pin to a release tag (or a full commit SHA) rather than `@main` so that changes 
 ### Upload and submit for review
 
 ```yaml
-- uses: cristian-samsung/upload-galaxystore-action@v1
+- uses: cristian-samsung/upload-galaxystore-action@v1.2.0
   with:
     access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
     service-account-id: ${{ secrets.GALAXY_SERVICE_ACCOUNT_ID }}
@@ -81,7 +81,7 @@ Pin to a release tag (or a full commit SHA) rather than `@main` so that changes 
 ### Upload with scheduled publication
 
 ```yaml
-- uses: cristian-samsung/upload-galaxystore-action@v1
+- uses: cristian-samsung/upload-galaxystore-action@v1.2.0
   with:
     access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
     service-account-id: ${{ secrets.GALAXY_SERVICE_ACCOUNT_ID }}
@@ -95,7 +95,7 @@ Pin to a release tag (or a full commit SHA) rather than `@main` so that changes 
 ### Upload with staged rollout
 
 ```yaml
-- uses: cristian-samsung/upload-galaxystore-action@v1
+- uses: cristian-samsung/upload-galaxystore-action@v1.2.0
   id: upload
   with:
     access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
@@ -119,7 +119,7 @@ Pin to a release tag (or a full commit SHA) rather than `@main` so that changes 
 Raise the percentage of a staged rollout that is already running. Nothing is uploaded and no update session is opened.
 
 ```yaml
-- uses: cristian-samsung/upload-galaxystore-action@v1
+- uses: cristian-samsung/upload-galaxystore-action@v1.2.0
   with:
     mode: update-rollout
     access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
@@ -202,14 +202,14 @@ The `dist/index.js` bundle must be committed as it is what GitHub Actions execut
 
 ### Releasing
 
-1. Merge to `main` with a rebuilt `dist/`.
-2. Tag the release, for example `v1.1.0`, and move the floating major tag:
+1. Bump `version` in `package.json` and update the `@vX.Y.Z` references in the usage examples above.
+2. Merge to `main` with a rebuilt `dist/`.
+3. Tag the release and move the floating major tag, pushing both to every remote:
 
    ```bash
-   git tag v1.1.0
-   git tag -f v1
-   git push origin v1.1.0
-   git push -f origin v1
+   git tag -a v1.2.0 -m "v1.2.0"
+   git tag -f -a v1 -m "v1 (currently v1.2.0)"
+   git push origin v1.2.0 +v1
    ```
 
 ## License
