@@ -53,6 +53,8 @@ function setupInputs(
     'rollout-rate': '',
     'publication-type': '01',
     'start-publication-date': '',
+    'mode': 'upload',
+    'rollout-app-status': '',
     ...overrides
   };
   const bools: Record<string, boolean> = {
@@ -167,7 +169,7 @@ describe('input validation', () => {
     mockAddBinary.mockResolvedValue({ data: { binarySeq: '5' } });
     await run();
     expect(mockSetFailed).not.toHaveBeenCalled();
-    expect(mockSetStagedRolloutRate).toHaveBeenCalledWith('000012345678', Number(rate));
+    expect(mockSetStagedRolloutRate).toHaveBeenCalledWith('000012345678', Number(rate), 'REGISTRATION');
   });
 
   test('ignores an invalid rollout-rate when staged-rollout is false', async () => {
@@ -285,7 +287,7 @@ describe('staged rollout', () => {
     // Only the pre-upload snapshot is taken; no post-upload diff is needed
     expect(mockGetStagedRolloutBinaries).toHaveBeenCalledTimes(1);
     expect(mockAddStagedRolloutBinary).toHaveBeenCalledWith('000012345678', 7);
-    expect(mockSetStagedRolloutRate).toHaveBeenCalledWith('000012345678', 10);
+    expect(mockSetStagedRolloutRate).toHaveBeenCalledWith('000012345678', 10, 'REGISTRATION');
     expect(mockSetOutput).toHaveBeenCalledWith('binary-seq', '7');
     expect(mockSetFailed).not.toHaveBeenCalled();
   });
@@ -299,7 +301,7 @@ describe('staged rollout', () => {
     await run();
 
     expect(mockAddStagedRolloutBinary).toHaveBeenCalledWith('000012345678', 2);
-    expect(mockSetStagedRolloutRate).toHaveBeenCalledWith('000012345678', 10);
+    expect(mockSetStagedRolloutRate).toHaveBeenCalledWith('000012345678', 10, 'REGISTRATION');
     expect(mockSetOutput).toHaveBeenCalledWith('binary-seq', '2');
   });
 
@@ -315,7 +317,7 @@ describe('staged rollout', () => {
     expect(mockGetStagedRolloutBinaries).toHaveBeenCalledWith('000012345678', 'REGISTRATION');
     expect(mockGetStagedRolloutBinaries).toHaveBeenCalledWith('000012345678', 'SALE');
     expect(mockAddStagedRolloutBinary).toHaveBeenCalledWith('000012345678', 3);
-    expect(mockSetStagedRolloutRate).toHaveBeenCalledWith('000012345678', 25);
+    expect(mockSetStagedRolloutRate).toHaveBeenCalledWith('000012345678', 25, 'REGISTRATION');
   });
 
   test('fails if no new binaries found after upload', async () => {
@@ -411,5 +413,114 @@ describe('staged rollout', () => {
       expect(mockDisableStagedRollout).not.toHaveBeenCalled();
       expect(mockSetFailed).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('mode: update-rollout', () => {
+  function setupUpdate(overrides: Record<string, string> = {}) {
+    setupInputs({ 'mode': 'update-rollout', 'rollout-app-status': 'SALE', 'rollout-rate': '50', 'package-path': '', ...overrides });
+  }
+
+  test('fails on an unknown mode', async () => {
+    setupInputs({ 'mode': 'rollout' });
+    await run();
+    expect(mockSetFailed).toHaveBeenCalledWith(expect.stringContaining('mode must be one of upload, update-rollout'));
+    expect(mockCreateUpdate).not.toHaveBeenCalled();
+    expect(mockGetStagedRolloutRate).not.toHaveBeenCalled();
+  });
+
+  test.each(['', 'LIVE', 'sale'])("fails when rollout-app-status is '%s'", async (status) => {
+    setupUpdate({ 'rollout-app-status': status });
+    await run();
+    expect(mockSetFailed).toHaveBeenCalledWith(expect.stringContaining('rollout-app-status must be SALE or REGISTRATION'));
+    expect(mockGetStagedRolloutRate).not.toHaveBeenCalled();
+  });
+
+  test.each(['', '0', '101', 'abc'])("fails when rollout-rate is '%s'", async (rate) => {
+    setupUpdate({ 'rollout-rate': rate });
+    await run();
+    expect(mockSetFailed).toHaveBeenCalledWith(expect.stringContaining('rollout-rate must be an integer between 1 and 100'));
+    expect(mockGetStagedRolloutRate).not.toHaveBeenCalled();
+  });
+
+  test('raises the rate on the SALE version and reports the previous rate', async () => {
+    setupUpdate();
+    mockGetStagedRolloutRate.mockResolvedValue({ rolloutRate: 10, countries: [] });
+
+    await run();
+
+    expect(mockGetStagedRolloutRate).toHaveBeenCalledWith('000012345678', 'SALE');
+    expect(mockSetStagedRolloutRate).toHaveBeenCalledWith('000012345678', 50, 'SALE');
+    expect(mockSetOutput).toHaveBeenCalledWith('previous-rollout-rate', '10');
+    expect(mockSetFailed).not.toHaveBeenCalled();
+  });
+
+  test('raises the rate on the REGISTRATION version', async () => {
+    setupUpdate({ 'rollout-app-status': 'REGISTRATION', 'rollout-rate': '100' });
+    mockGetStagedRolloutRate.mockResolvedValue({ rolloutRate: 25 });
+
+    await run();
+
+    expect(mockGetStagedRolloutRate).toHaveBeenCalledWith('000012345678', 'REGISTRATION');
+    expect(mockSetStagedRolloutRate).toHaveBeenCalledWith('000012345678', 100, 'REGISTRATION');
+    expect(mockSetFailed).not.toHaveBeenCalled();
+  });
+
+  test('does not touch the upload endpoints or the file system', async () => {
+    setupUpdate();
+    mockGetStagedRolloutRate.mockResolvedValue({ rolloutRate: 10 });
+    mockExistsSync.mockReturnValue(false); // would fail upload mode
+
+    await run();
+
+    expect(mockExistsSync).not.toHaveBeenCalled();
+    expect(mockCreateUpdate).not.toHaveBeenCalled();
+    expect(mockUploadFile).not.toHaveBeenCalled();
+    expect(mockAddBinary).not.toHaveBeenCalled();
+    expect(mockAddStagedRolloutBinary).not.toHaveBeenCalled();
+    expect(mockSubmitApp).not.toHaveBeenCalled();
+    expect(mockDisableStagedRollout).not.toHaveBeenCalled();
+    expect(mockSetFailed).not.toHaveBeenCalled();
+  });
+
+  test('fails when no staged rollout exists on the chosen version', async () => {
+    setupUpdate();
+    mockGetStagedRolloutRate.mockResolvedValue(null);
+
+    await run();
+
+    expect(mockSetFailed).toHaveBeenCalledWith(expect.stringContaining('No staged rollout exists on the SALE version'));
+    expect(mockSetStagedRolloutRate).not.toHaveBeenCalled();
+  });
+
+  test('fails when the response has no rolloutRate', async () => {
+    setupUpdate();
+    mockGetStagedRolloutRate.mockResolvedValue({ countries: [] });
+
+    await run();
+
+    expect(mockSetFailed).toHaveBeenCalledWith(expect.stringContaining('No staged rollout exists'));
+    expect(mockSetStagedRolloutRate).not.toHaveBeenCalled();
+  });
+
+  test.each([50, 60])('fails when the requested rate (50) is not higher than the current rate (%i)', async (current) => {
+    setupUpdate();
+    mockGetStagedRolloutRate.mockResolvedValue({ rolloutRate: current });
+
+    await run();
+
+    expect(mockSetFailed).toHaveBeenCalledWith(`rollout-rate must be higher than the current rate of ${current}%, got: 50%`);
+    expect(mockSetOutput).toHaveBeenCalledWith('previous-rollout-rate', String(current));
+    expect(mockSetStagedRolloutRate).not.toHaveBeenCalled();
+  });
+
+  test('reports API errors from the rate update', async () => {
+    setupUpdate();
+    mockGetStagedRolloutRate.mockResolvedValue({ rolloutRate: 10 });
+    mockSetStagedRolloutRate.mockRejectedValue(new Error('HTTP 400: {"resultCode":"3103"}'));
+
+    await run();
+
+    expect(mockSetFailed).toHaveBeenCalledWith(expect.stringContaining('3103'));
   });
 });

@@ -384,7 +384,7 @@ describe('GalaxyStoreClient', () => {
   });
 
   describe('setStagedRolloutRate', () => {
-    test('sends PUT with ENABLE_ROLLOUT and REGISTRATION status', async () => {
+    test('defaults to the REGISTRATION version', async () => {
       const client = new GalaxyStoreClient('account-id', 'token');
       const mock = getMockClient();
       mock.put.mockResolvedValue({ data: { success: true } });
@@ -399,6 +399,19 @@ describe('GalaxyStoreClient', () => {
           appStatus: 'REGISTRATION',
           rolloutRate: 25
         }
+      );
+    });
+
+    test('targets the SALE version when requested', async () => {
+      const client = new GalaxyStoreClient('account-id', 'token');
+      const mock = getMockClient();
+      mock.put.mockResolvedValue({ data: { resultCode: '0000' } });
+
+      await client.setStagedRolloutRate('000012345678', 50, 'SALE');
+
+      expect(mock.put).toHaveBeenCalledWith(
+        expect.stringContaining('/seller/v2/content/stagedRolloutRate'),
+        { contentId: '000012345678', function: 'ENABLE_ROLLOUT', appStatus: 'SALE', rolloutRate: 50 }
       );
     });
   });

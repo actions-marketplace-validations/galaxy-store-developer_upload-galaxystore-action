@@ -235,12 +235,13 @@ export class GalaxyStoreClient {
     }
   }
 
-  // Enable a staged rollout on the REGISTRATION version and set its percentage
-  async setStagedRolloutRate(contentId: string, rolloutRate: number): Promise<unknown> {
+  // Enable a staged rollout (or raise the rate of an active one) on the given version.
+  // Samsung requires each new rate to be higher than the previous one for that version.
+  async setStagedRolloutRate(contentId: string, rolloutRate: number, appStatus: AppStatus = 'REGISTRATION'): Promise<unknown> {
     const response = await this.client.put(`${BASE_URL}/seller/v2/content/stagedRolloutRate`, {
       contentId,
       function: 'ENABLE_ROLLOUT',
-      appStatus: 'REGISTRATION',
+      appStatus,
       rolloutRate
     });
     return response.data;

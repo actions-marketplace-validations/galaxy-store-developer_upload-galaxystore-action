@@ -10,6 +10,7 @@ This action requires a Galaxy Store service account and access token. See [Creat
 - Optionally submit the app for review after uploading
 - Optionally add the uploaded binary to a staged rollout group with a configurable rollout rate
 - Optionally disable a still-active staged rollout on the live version before starting the new one
+- Raise the staged rollout rate of an existing version (live or pending) without uploading anything
 - Configurable publication type (automatic, scheduled, or manual)
 
 ## Inputs
@@ -19,13 +20,15 @@ This action requires a Galaxy Store service account and access token. See [Creat
 | `access-token` | Yes | | Galaxy Store API access token |
 | `service-account-id` | Yes | | Galaxy Store service account ID |
 | `content-id` | Yes | | 12-digit content ID of the app in the Galaxy Store |
-| `package-path` | Yes | | Path to the `.apk` or `.aab` file to upload |
+| `mode` | No | `upload` | `upload` uploads a binary. `update-rollout` raises the staged rollout rate of an existing version without uploading; see [Updating an existing rollout](#updating-an-existing-rollout). |
+| `package-path` | Upload mode | | Path to the `.apk` or `.aab` file to upload |
 | `binary-seq-for-device-info` | No | | `binarySeq` of an existing binary whose device configuration should be copied to the new binary. See [Finding a binary sequence number](#finding-a-binary-sequence-number). |
 | `publication-type` | No | `01` | When the app is published: `01` = automatically after review, `02` = on a scheduled date, `03` = manually by the seller |
 | `start-publication-date` | No | | Publication date in `yyyy-MM-dd HH:mm:ss` format. Required when `publication-type` is `02`. |
 | `submit` | No | `false` | Whether to submit the app for review after uploading |
 | `staged-rollout` | No | `false` | Whether to add the uploaded binary to a staged rollout group |
-| `rollout-rate` | No | | Staged rollout percentage as an integer from `1` to `100`. Required when `staged-rollout` is `true`; ignored otherwise. |
+| `rollout-rate` | No | | Staged rollout percentage as an integer from `1` to `100`. Required when `staged-rollout` is `true` or `mode` is `update-rollout`; ignored otherwise. In `update-rollout` mode it must be higher than the current rate. |
+| `rollout-app-status` | Update mode | | Which version to change in `update-rollout` mode: `SALE` (the live version) or `REGISTRATION` (a pending update). |
 | `disable-existing-rollout` | No | `false` | When `staged-rollout` is `true`, disable a staged rollout that is still below 100% on the **live** version before enabling the new one. See [Staged rollout preconditions](#staged-rollout-preconditions). |
 
 ## Outputs
@@ -34,6 +37,7 @@ This action requires a Galaxy Store service account and access token. See [Creat
 |--------|-------------|
 | `upload-result` | JSON string containing the add binary API response |
 | `binary-seq` | The binary sequence number of the uploaded binary (only set when `staged-rollout` is `true`) |
+| `previous-rollout-rate` | The rollout rate before the change (only set when `mode` is `update-rollout`) |
 
 ## Authentication
 
@@ -110,9 +114,26 @@ Pin to a release tag (or a full commit SHA) rather than `@main` so that changes 
     echo "New binary seq: $BINARY_SEQ"
 ```
 
+### Updating an existing rollout
+
+Raise the percentage of a staged rollout that is already running. Nothing is uploaded and no update session is opened.
+
+```yaml
+- uses: cristian-samsung/upload-galaxystore-action@v1
+  with:
+    mode: update-rollout
+    access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
+    service-account-id: ${{ secrets.GALAXY_SERVICE_ACCOUNT_ID }}
+    content-id: '000012345678'
+    rollout-app-status: SALE
+    rollout-rate: 50
+```
+
+`rollout-app-status` picks which version to change. `SALE` is the version users currently have, so this is the typical "10% today, 50% tomorrow, 100% next week" progression. `REGISTRATION` is a pending update, for example one waiting in review or one that passed review under `publication-type: '03'` and has not been released yet. Samsung requires each new rate to be higher than the current one, and the action checks this before calling the API. It fails if no staged rollout exists on the chosen version.
+
 ## How it works
 
-The action calls the Galaxy Store Content Publish API in this order:
+In `upload` mode the action calls the Galaxy Store Content Publish API in this order:
 
 1. *(optional, `disable-existing-rollout`)* `GET /seller/v2/content/stagedRolloutRate?appStatus=SALE` and, if a rollout below 100% is active, `PUT /seller/v2/content/stagedRolloutRate` with `DISABLE_ROLLOUT`.
 2. `POST /seller/contentUpdate` with `contentId` and `publicationType` (plus `startPublicationDate` when scheduled). This moves the app into the REGISTERING (Updating) state. No other app metadata is sent, so titles, descriptions and country settings are left untouched.
@@ -122,6 +143,8 @@ The action calls the Galaxy Store Content Publish API in this order:
 6. *(optional, `submit`)* `POST /seller/contentSubmit`.
 
 If the add-binary response does not include `binarySeq` (API releases before 2026.05.13), the action falls back to comparing the staged-rollout binary list before and after the upload.
+
+In `update-rollout` mode it calls `GET /seller/v2/content/stagedRolloutRate` for the chosen `appStatus`, verifies the requested rate is higher, then `PUT /seller/v2/content/stagedRolloutRate` with `ENABLE_ROLLOUT` and the new rate.
 
 ## Notes and caveats
 
@@ -137,7 +160,7 @@ Samsung requires that any staged rollout on the live (SALE) version be disabled,
 
 Set `disable-existing-rollout: true` to have the action handle this. It only disables a rollout that is still below 100%, and it only touches the live version. Because this changes what your current users receive, it is off by default.
 
-Each new rollout rate must be greater than the previous one for the same version. Increasing the rate after release is done with `PUT /seller/v2/content/stagedRolloutRate` and is not covered by this action.
+Each new rollout rate must be greater than the previous one for the same version. To increase the rate after release, run the action again with `mode: update-rollout` (see [Updating an existing rollout](#updating-an-existing-rollout)).
 
 ### Finding a binary sequence number
 

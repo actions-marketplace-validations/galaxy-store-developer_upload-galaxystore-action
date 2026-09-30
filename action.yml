@@ -12,9 +12,13 @@ inputs:
   content-id:
     description: '12-digit content ID of the app in the Galaxy Store'
     required: true
+  mode:
+    description: 'upload = upload a binary (default). update-rollout = raise the staged rollout rate of an existing version without uploading anything; requires rollout-app-status and rollout-rate.'
+    required: false
+    default: 'upload'
   package-path:
-    description: 'Path to the .apk or .aab file to upload'
-    required: true
+    description: 'Path to the .apk or .aab file to upload. Required when mode is upload.'
+    required: false
   binary-seq-for-device-info:
     description: 'binarySeq of an existing binary whose device configuration should be copied to the new binary. Obtain it from the binaryList in GET /seller/contentInfo. Only set if your app requires a specific device configuration.'
     required: false
@@ -34,7 +38,10 @@ inputs:
     required: false
     default: 'false'
   rollout-rate:
-    description: 'Staged rollout percentage as an integer from 1 to 100. Required when staged-rollout is true; ignored otherwise.'
+    description: 'Staged rollout percentage as an integer from 1 to 100. Required when staged-rollout is true or mode is update-rollout; ignored otherwise. In update-rollout mode it must be higher than the current rate.'
+    required: false
+  rollout-app-status:
+    description: 'Which version to change in update-rollout mode: SALE = the live version users have now, REGISTRATION = a pending update (in review or awaiting manual release). Required when mode is update-rollout.'
     required: false
   disable-existing-rollout:
     description: 'When staged-rollout is true, disable any staged rollout that is still active (below 100%) on the LIVE version of the app before enabling the new one. Samsung requires this, but it changes the live app, so it is off by default.'
@@ -46,6 +53,8 @@ outputs:
     description: 'JSON string containing the add binary API response'
   binary-seq:
     description: 'The binary sequence number of the uploaded binary (only set when staged-rollout is true)'
+  previous-rollout-rate:
+    description: 'The rollout rate before the change (only set when mode is update-rollout)'
 
 runs:
   using: 'node24'
