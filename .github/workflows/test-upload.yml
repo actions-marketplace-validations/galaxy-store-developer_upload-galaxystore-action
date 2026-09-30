@@ -7,7 +7,7 @@ jobs:
   upload:
     runs-on: code-linux
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       # Expects a release tagged v0.1-test-assets in this repository containing app-release_v101.aab.
       # The host is derived from GITHUB_SERVER_URL so this works on github.com and GitHub Enterprise.
