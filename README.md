@@ -106,7 +106,8 @@ Pin to a release tag (or a full commit SHA) rather than `@main` so that changes 
 - name: Show the new binary sequence number
   env:
     BINARY_SEQ: ${{ steps.upload.outputs.binary-seq }}
-  run: echo "New binary seq: $BINARY_SEQ"
+  run: |
+    echo "New binary seq: $BINARY_SEQ"
 ```
 
 ## How it works

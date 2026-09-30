@@ -34,4 +34,5 @@ jobs:
         if: steps.upload.outputs.binary-seq
         env:
           BINARY_SEQ: ${{ steps.upload.outputs.binary-seq }}
-        run: echo "Binary seq: $BINARY_SEQ"
+        run: |
+          echo "Binary seq: $BINARY_SEQ"
