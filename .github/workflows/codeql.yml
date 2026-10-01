@@ -15,9 +15,11 @@ permissions:
 
 jobs:
   analyze:
-    # Skip on GitHub Enterprise instances (no ubuntu-latest runner / CodeQL support there);
-    # a job-level if is evaluated before runner assignment, so the job never queues.
-    if: github.server_url == 'https://github.com'
+    # Skip on GitHub Enterprise instances (no ubuntu-latest runner / CodeQL support there)
+    # and on private repos (code scanning requires Advanced Security there). A job-level if
+    # is evaluated before runner assignment, so the job never queues. Activates on its own
+    # once the repository is public.
+    if: github.server_url == 'https://github.com' && github.event.repository.private == false
     runs-on: ubuntu-latest
     permissions:
       contents: read
