@@ -1,6 +1,6 @@
 name: 'Upload to Samsung Galaxy Store'
 description: 'Upload Android APK or AAB files to the Samsung Galaxy Store'
-author: 'Cristian Lewczyk'
+author: 'Samsung Electronics Co., Ltd.'
 
 inputs:
   access-token:

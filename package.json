@@ -7,9 +7,24 @@
     "build": "ncc build src/main.ts -o dist --license licenses.txt",
     "test": "jest"
   },
-  "keywords": [],
-  "author": "Cristian Lewczyk",
+  "keywords": [
+    "github-action",
+    "samsung",
+    "galaxy-store",
+    "android",
+    "apk",
+    "aab"
+  ],
+  "author": "Samsung Electronics Co., Ltd.",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cristian-samsung/upload-galaxystore-action.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cristian-samsung/upload-galaxystore-action/issues"
+  },
+  "homepage": "https://github.com/cristian-samsung/upload-galaxystore-action#readme",
   "dependencies": {
     "@actions/core": "^2.0.3",
     "axios": "^1.20.0"

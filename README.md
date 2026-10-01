@@ -212,6 +212,19 @@ The `dist/index.js` bundle must be committed as it is what GitHub Actions execut
    git push origin v1.2.0 +v1
    ```
 
+> **Note:** when this action moves to its official public home, the `uses:` paths in the
+> usage examples above (and the `repository`/`bugs`/`homepage` fields in `package.json`)
+> must be updated to the new org/repo, and the release tags re-baselined there.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). For security vulnerabilities, follow [SECURITY.md](SECURITY.md) instead of opening a public issue.
+
+## Security
+
+- The action sends the access token only to `*.samsungapps.com` hosts over HTTPS and masks both the token and the service account ID in workflow logs.
+- Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+
 ## License
 
 This project is licensed under the [Apache License 2.0](LICENSE).

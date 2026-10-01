@@ -1,3 +1,6 @@
+// Copyright 2026 Samsung Electronics Co., Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -90,6 +93,25 @@ function isNotFound(error: unknown): boolean {
   return error instanceof GalaxyStoreApiError && error.status === 404;
 }
 
+// The upload URL comes from the createUploadSessionId response. Only trust it if it is an
+// HTTPS URL on a Samsung host; otherwise the Bearer token would be sent wherever the
+// response says. Anything else falls back to the documented upload endpoint.
+export function resolveUploadUrl(sessionUrl: string | undefined): string {
+  if (!sessionUrl) {
+    return DEFAULT_UPLOAD_URL;
+  }
+  let url: URL;
+  try {
+    url = new URL(sessionUrl);
+  } catch {
+    return DEFAULT_UPLOAD_URL;
+  }
+  const trusted =
+    url.protocol === 'https:' &&
+    (url.hostname === 'samsungapps.com' || url.hostname.endsWith('.samsungapps.com'));
+  return trusted ? sessionUrl : DEFAULT_UPLOAD_URL;
+}
+
 // Client for the Samsung Galaxy Store Seller API.
 // Handles authentication and wraps all API calls used by this action.
 export class GalaxyStoreClient {
@@ -140,7 +162,7 @@ export class GalaxyStoreClient {
     form.append('file', blob, path.basename(filePath));
     form.append('sessionId', session.sessionId);
 
-    const response = await this.client.post<UploadResult>(session.url || DEFAULT_UPLOAD_URL, form, {
+    const response = await this.client.post<UploadResult>(resolveUploadUrl(session.url), form, {
       timeout: UPLOAD_TIMEOUT_MS,
       maxBodyLength: Infinity,
       maxContentLength: Infinity
