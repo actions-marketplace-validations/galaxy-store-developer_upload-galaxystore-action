@@ -15,6 +15,9 @@ permissions:
 
 jobs:
   analyze:
+    # Skip on GitHub Enterprise instances (no ubuntu-latest runner / CodeQL support there);
+    # a job-level if is evaluated before runner assignment, so the job never queues.
+    if: github.server_url == 'https://github.com'
     runs-on: ubuntu-latest
     permissions:
       contents: read
