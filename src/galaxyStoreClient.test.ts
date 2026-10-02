@@ -81,13 +81,14 @@ describe('GalaxyStoreClient', () => {
         caught = error;
       }
 
-      expect(caught).toBeInstanceOf(GalaxyStoreApiError);
-      const apiError = caught as GalaxyStoreApiError;
-      expect(apiError.status).toBe(400);
-      expect(apiError.url).toBe('https://devapi.samsungapps.com/seller/contentUpdate');
-      expect(apiError.body).toEqual({ resultCode: '1000', resultMessage: 'Invalid parameter' });
-      expect(apiError.message).toContain('HTTP 400');
-      expect(apiError.message).toContain('Invalid parameter');
+      if (!(caught instanceof GalaxyStoreApiError)) {
+        throw new Error(`expected GalaxyStoreApiError, got: ${String(caught)}`);
+      }
+      expect(caught.status).toBe(400);
+      expect(caught.url).toBe('https://devapi.samsungapps.com/seller/contentUpdate');
+      expect(caught.body).toEqual({ resultCode: '1000', resultMessage: 'Invalid parameter' });
+      expect(caught.message).toContain('HTTP 400');
+      expect(caught.message).toContain('Invalid parameter');
     });
 
     test('response interceptor rethrows network errors without a response unchanged', () => {
