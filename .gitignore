@@ -4,3 +4,7 @@ dist/*
 !dist/licenses.txt
 *.js.map
 CLAUDE.md
+
+# Internal review artifacts — never publish
+verification-report/
+*_defects_*.csv
