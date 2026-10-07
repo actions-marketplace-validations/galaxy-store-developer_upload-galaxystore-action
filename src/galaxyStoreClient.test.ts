@@ -1,6 +1,9 @@
+// Copyright 2026 Samsung Electronics Co., Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 import axios from 'axios';
 import * as fs from 'fs';
-import { GalaxyStoreClient, GalaxyStoreApiError } from './galaxyStoreClient';
+import { GalaxyStoreClient, GalaxyStoreApiError, resolveUploadUrl } from './galaxyStoreClient';
 
 jest.mock('axios', () => {
   const mockAxiosInstance = {
@@ -78,13 +81,14 @@ describe('GalaxyStoreClient', () => {
         caught = error;
       }
 
-      expect(caught).toBeInstanceOf(GalaxyStoreApiError);
-      const apiError = caught as GalaxyStoreApiError;
-      expect(apiError.status).toBe(400);
-      expect(apiError.url).toBe('https://devapi.samsungapps.com/seller/contentUpdate');
-      expect(apiError.body).toEqual({ resultCode: '1000', resultMessage: 'Invalid parameter' });
-      expect(apiError.message).toContain('HTTP 400');
-      expect(apiError.message).toContain('Invalid parameter');
+      if (!(caught instanceof GalaxyStoreApiError)) {
+        throw new Error(`expected GalaxyStoreApiError, got: ${String(caught)}`);
+      }
+      expect(caught.status).toBe(400);
+      expect(caught.url).toBe('https://devapi.samsungapps.com/seller/contentUpdate');
+      expect(caught.body).toEqual({ resultCode: '1000', resultMessage: 'Invalid parameter' });
+      expect(caught.message).toContain('HTTP 400');
+      expect(caught.message).toContain('Invalid parameter');
     });
 
     test('response interceptor rethrows network errors without a response unchanged', () => {
@@ -126,7 +130,7 @@ describe('GalaxyStoreClient', () => {
       const client = new GalaxyStoreClient('account-id', 'token');
       const mock = getMockClient();
       mock.post
-        .mockResolvedValueOnce({ data: { sessionId: 'sess-1', url: 'https://upload.example/fileUpload' } })
+        .mockResolvedValueOnce({ data: { sessionId: 'sess-1', url: 'https://upload.samsungapps.com/galaxyapi/fileUpload' } })
         .mockResolvedValueOnce({ data: { fileKey: 'key-1', fileName: 'app.aab', fileSize: '12', errorCode: null, errorMsg: null } });
 
       const result = await client.uploadFile('/builds/app.aab');
@@ -135,7 +139,7 @@ describe('GalaxyStoreClient', () => {
       expect(mockOpenAsBlob).toHaveBeenCalledWith('/builds/app.aab', { type: 'application/octet-stream' });
 
       const [url, body, config] = mock.post.mock.calls[1];
-      expect(url).toBe('https://upload.example/fileUpload');
+      expect(url).toBe('https://upload.samsungapps.com/galaxyapi/fileUpload');
       expect(body).toBeInstanceOf(FormData);
       expect(body.get('sessionId')).toBe('sess-1');
       const file = body.get('file') as File;
@@ -169,6 +173,18 @@ describe('GalaxyStoreClient', () => {
       expect(mock.post.mock.calls[1][0]).toBe('https://seller.samsungapps.com/galaxyapi/fileUpload');
     });
 
+    test('falls back to the default upload URL when the session url is not a Samsung host', async () => {
+      const client = new GalaxyStoreClient('account-id', 'token');
+      const mock = getMockClient();
+      mock.post
+        .mockResolvedValueOnce({ data: { sessionId: 'sess-1', url: 'https://evil.example/fileUpload' } })
+        .mockResolvedValueOnce({ data: { fileKey: 'key-1' } });
+
+      await client.uploadFile('/builds/app.aab');
+
+      expect(mock.post.mock.calls[1][0]).toBe('https://seller.samsungapps.com/galaxyapi/fileUpload');
+    });
+
     test('throws with the API error message when the upload returns errorMsg and no fileKey', async () => {
       const client = new GalaxyStoreClient('account-id', 'token');
       const mock = getMockClient();
@@ -187,6 +203,41 @@ describe('GalaxyStoreClient', () => {
         .mockResolvedValueOnce({ data: {} });
 
       await expect(client.uploadFile('/builds/app.aab')).rejects.toThrow('did not include a fileKey');
+    });
+  });
+
+  describe('resolveUploadUrl', () => {
+    const DEFAULT = 'https://seller.samsungapps.com/galaxyapi/fileUpload';
+
+    test('accepts an HTTPS URL on a samsungapps.com subdomain', () => {
+      expect(resolveUploadUrl('https://upload.samsungapps.com/galaxyapi/fileUpload'))
+        .toBe('https://upload.samsungapps.com/galaxyapi/fileUpload');
+    });
+
+    test('accepts an HTTPS URL on the bare samsungapps.com domain', () => {
+      expect(resolveUploadUrl('https://samsungapps.com/fileUpload')).toBe('https://samsungapps.com/fileUpload');
+    });
+
+    test('rejects plain HTTP even on a Samsung host', () => {
+      expect(resolveUploadUrl('http://seller.samsungapps.com/galaxyapi/fileUpload')).toBe(DEFAULT);
+    });
+
+    test('rejects other hosts', () => {
+      expect(resolveUploadUrl('https://attacker.example/fileUpload')).toBe(DEFAULT);
+    });
+
+    test('rejects suffix-spoofed hostnames', () => {
+      expect(resolveUploadUrl('https://evilsamsungapps.com/fileUpload')).toBe(DEFAULT);
+      expect(resolveUploadUrl('https://samsungapps.com.evil.example/fileUpload')).toBe(DEFAULT);
+    });
+
+    test('rejects unparsable URLs', () => {
+      expect(resolveUploadUrl('not a url')).toBe(DEFAULT);
+    });
+
+    test('falls back when the URL is missing or empty', () => {
+      expect(resolveUploadUrl(undefined)).toBe(DEFAULT);
+      expect(resolveUploadUrl('')).toBe(DEFAULT);
     });
   });
 

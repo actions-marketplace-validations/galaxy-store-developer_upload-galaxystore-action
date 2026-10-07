@@ -1,3 +1,6 @@
+// Copyright 2026 Samsung Electronics Co., Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 const mockCreateUpdate = jest.fn();
 const mockUploadFile = jest.fn();
 const mockAddBinary = jest.fn();
@@ -125,6 +128,12 @@ describe('input validation', () => {
     setupInputs();
     await run();
     expect(mockSetSecret).toHaveBeenCalledWith('test-token');
+  });
+
+  test('masks the service account ID', async () => {
+    setupInputs();
+    await run();
+    expect(mockSetSecret).toHaveBeenCalledWith('test-account');
   });
 
   test('fails if content-id is not 12 digits', async () => {

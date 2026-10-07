@@ -1,3 +1,6 @@
+// Copyright 2026 Samsung Electronics Co., Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 import * as core from '@actions/core';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -53,6 +56,7 @@ export async function run(): Promise<void> {
     const accessToken = core.getInput('access-token', { required: true });
     core.setSecret(accessToken);
     const serviceAccountId = core.getInput('service-account-id', { required: true });
+    core.setSecret(serviceAccountId);
     const contentId = core.getInput('content-id', { required: true });
     const mode = (core.getInput('mode') || 'upload') as Mode;
 

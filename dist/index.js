@@ -36712,6 +36712,8 @@ module.exports = {
 
 "use strict";
 
+// Copyright 2026 Samsung Electronics Co., Ltd.
+// SPDX-License-Identifier: Apache-2.0
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -36750,6 +36752,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.GalaxyStoreClient = exports.GalaxyStoreApiError = exports.CLIENT_SOURCE = void 0;
+exports.resolveUploadUrl = resolveUploadUrl;
 const axios_1 = __importDefault(__nccwpck_require__(7269));
 const fs = __importStar(__nccwpck_require__(9896));
 const path = __importStar(__nccwpck_require__(6928));
@@ -36777,6 +36780,24 @@ class GalaxyStoreApiError extends Error {
 exports.GalaxyStoreApiError = GalaxyStoreApiError;
 function isNotFound(error) {
     return error instanceof GalaxyStoreApiError && error.status === 404;
+}
+// The upload URL comes from the createUploadSessionId response. Only trust it if it is an
+// HTTPS URL on a Samsung host; otherwise the Bearer token would be sent wherever the
+// response says. Anything else falls back to the documented upload endpoint.
+function resolveUploadUrl(sessionUrl) {
+    if (!sessionUrl) {
+        return DEFAULT_UPLOAD_URL;
+    }
+    let url;
+    try {
+        url = new URL(sessionUrl);
+    }
+    catch {
+        return DEFAULT_UPLOAD_URL;
+    }
+    const trusted = url.protocol === 'https:' &&
+        (url.hostname === 'samsungapps.com' || url.hostname.endsWith('.samsungapps.com'));
+    return trusted ? sessionUrl : DEFAULT_UPLOAD_URL;
 }
 // Client for the Samsung Galaxy Store Seller API.
 // Handles authentication and wraps all API calls used by this action.
@@ -36817,7 +36838,7 @@ class GalaxyStoreClient {
         const blob = await fs.openAsBlob(filePath, { type: mimeTypeFor(filePath) });
         form.append('file', blob, path.basename(filePath));
         form.append('sessionId', session.sessionId);
-        const response = await this.client.post(session.url || DEFAULT_UPLOAD_URL, form, {
+        const response = await this.client.post(resolveUploadUrl(session.url), form, {
             timeout: UPLOAD_TIMEOUT_MS,
             maxBodyLength: Infinity,
             maxContentLength: Infinity
@@ -36937,6 +36958,8 @@ function mimeTypeFor(filePath) {
 
 "use strict";
 
+// Copyright 2026 Samsung Electronics Co., Ltd.
+// SPDX-License-Identifier: Apache-2.0
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -37022,6 +37045,7 @@ async function run() {
         const accessToken = core.getInput('access-token', { required: true });
         core.setSecret(accessToken);
         const serviceAccountId = core.getInput('service-account-id', { required: true });
+        core.setSecret(serviceAccountId);
         const contentId = core.getInput('content-id', { required: true });
         const mode = (core.getInput('mode') || 'upload');
         if (!CONTENT_ID_PATTERN.test(contentId)) {
