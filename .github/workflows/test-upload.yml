@@ -6,7 +6,7 @@ on:
       asset-name:
         description: 'File name of the .apk/.aab asset to download from the v0.1-test-assets release'
         required: true
-        default: 'app-release_v102.aab'
+        default: 'app-release_v101.aab'
       rollout-rate:
         description: 'Staged rollout percentage (1-100)'
         required: true
