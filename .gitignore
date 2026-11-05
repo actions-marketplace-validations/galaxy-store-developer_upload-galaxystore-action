@@ -8,3 +8,4 @@ CLAUDE.md
 # Internal review artifacts — never publish
 verification-report/
 *_defects_*.csv
+coverage/
