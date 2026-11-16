@@ -4,7 +4,7 @@ on:
   workflow_dispatch: # manual trigger only
     inputs:
       asset-name:
-        description: 'File name of the .apk/.aab asset to download from the v0.1-test-assets release'
+        description: 'File name of the .apk/.aab asset in the "test-assets" release of the private galaxy-store-developer/upload-galaxystore-test-assets repository'
         required: true
         default: 'app-release_v101.aab'
       rollout-rate:
@@ -27,16 +27,16 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # Downloads the chosen asset from the v0.1-test-assets release in this repository.
-      # The host is derived from GITHUB_SERVER_URL so this works on github.com and GitHub Enterprise.
+      # Downloads the chosen asset from the private test-assets repository. Test binaries are
+      # deliberately kept out of this public repository. TEST_ASSETS_TOKEN is a fine-grained
+      # PAT with read-only Contents access to that single repository.
       - name: Download test binary
         run: |
-          gh release download v0.1-test-assets --pattern "$ASSET_NAME" --repo "${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}"
+          gh release download test-assets --pattern "$ASSET_NAME" --repo galaxy-store-developer/upload-galaxystore-test-assets
           ls -l "$ASSET_NAME"
         env:
           ASSET_NAME: ${{ inputs.asset-name }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_ENTERPRISE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.TEST_ASSETS_TOKEN }}
 
       - name: Upload to Galaxy Store
         id: upload
