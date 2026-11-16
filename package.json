@@ -27,7 +27,7 @@
   "homepage": "https://github.com/galaxy-store-developer/upload-galaxystore-action#readme",
   "dependencies": {
     "@actions/core": "^2.0.3",
-    "axios": "^1.21.0"
+    "axios": "^1.21.1"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
