@@ -19,12 +19,12 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cristian-samsung/upload-galaxystore-action.git"
+    "url": "git+https://github.com/galaxy-store-developer/upload-galaxystore-action.git"
   },
   "bugs": {
-    "url": "https://github.com/cristian-samsung/upload-galaxystore-action/issues"
+    "url": "https://github.com/galaxy-store-developer/upload-galaxystore-action/issues"
   },
-  "homepage": "https://github.com/cristian-samsung/upload-galaxystore-action#readme",
+  "homepage": "https://github.com/galaxy-store-developer/upload-galaxystore-action#readme",
   "dependencies": {
     "@actions/core": "^2.0.3",
     "axios": "^1.21.0"
