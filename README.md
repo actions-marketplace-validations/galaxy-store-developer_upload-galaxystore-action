@@ -58,7 +58,7 @@ Pin to a release tag (or a full commit SHA) rather than `@main` so that changes 
 ### Basic upload
 
 ```yaml
-- uses: cristian-samsung/upload-galaxystore-action@v1.2.0
+- uses: galaxy-store-developer/upload-galaxystore-action@v1.2.0
   with:
     access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
     service-account-id: ${{ secrets.GALAXY_SERVICE_ACCOUNT_ID }}
@@ -69,7 +69,7 @@ Pin to a release tag (or a full commit SHA) rather than `@main` so that changes 
 ### Upload and submit for review
 
 ```yaml
-- uses: cristian-samsung/upload-galaxystore-action@v1.2.0
+- uses: galaxy-store-developer/upload-galaxystore-action@v1.2.0
   with:
     access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
     service-account-id: ${{ secrets.GALAXY_SERVICE_ACCOUNT_ID }}
@@ -81,7 +81,7 @@ Pin to a release tag (or a full commit SHA) rather than `@main` so that changes 
 ### Upload with scheduled publication
 
 ```yaml
-- uses: cristian-samsung/upload-galaxystore-action@v1.2.0
+- uses: galaxy-store-developer/upload-galaxystore-action@v1.2.0
   with:
     access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
     service-account-id: ${{ secrets.GALAXY_SERVICE_ACCOUNT_ID }}
@@ -95,7 +95,7 @@ Pin to a release tag (or a full commit SHA) rather than `@main` so that changes 
 ### Upload with staged rollout
 
 ```yaml
-- uses: cristian-samsung/upload-galaxystore-action@v1.2.0
+- uses: galaxy-store-developer/upload-galaxystore-action@v1.2.0
   id: upload
   with:
     access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
@@ -119,7 +119,7 @@ Pin to a release tag (or a full commit SHA) rather than `@main` so that changes 
 Raise the percentage of a staged rollout that is already running. Nothing is uploaded and no update session is opened.
 
 ```yaml
-- uses: cristian-samsung/upload-galaxystore-action@v1.2.0
+- uses: galaxy-store-developer/upload-galaxystore-action@v1.2.0
   with:
     mode: update-rollout
     access-token: ${{ secrets.GALAXY_ACCESS_TOKEN }}
@@ -211,10 +211,6 @@ The `dist/index.js` bundle must be committed as it is what GitHub Actions execut
    git tag -f -a v1 -m "v1 (currently v1.2.0)"
    git push origin v1.2.0 +v1
    ```
-
-> **Note:** when this action moves to its official public home, the `uses:` paths in the
-> usage examples above (and the `repository`/`bugs`/`homepage` fields in `package.json`)
-> must be updated to the new org/repo, and the release tags re-baselined there.
 
 ## Contributing
 
